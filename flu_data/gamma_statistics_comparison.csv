@@ -1,0 +1,5 @@
+,Direct Sampling,Direct Sampling,Direct Sampling,MvN-approx.,MvN-approx.,MvN-approx.,Meta-analysis,Meta-analysis,Meta-analysis
+,mean,sd,hdi,mean,sd,hdi,mean,sd,hdi
+Mean,3.40,0.12,"[3.21, 3.58]",3.11,0.19,"[2.80, 3.43]",3.51,0.43,"[2.79, 4.20]"
+Median,3.03,0.11,"[2.86, 3.22]",2.88,0.18,"[2.60, 3.18]",3.19,0.43,"[2.52, 3.94]"
+Mode,2.28,0.10,"[2.12, 2.45]",2.40,0.15,"[2.16, 2.66]",2.52,0.53,"[1.65, 3.38]"
