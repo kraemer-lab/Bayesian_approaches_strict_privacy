@@ -8,7 +8,6 @@ import glob
 import pytensor.tensor as pt
 from tqdm import tqdm
 from scipy.stats import gamma
-import numpyro
 
 #####plotting parameters
 plt.rcParams.update({'font.size': 14})
@@ -32,6 +31,7 @@ to_sample = np.arange(len(paths) - len(sampled_summaries_path)) + len(sampled_su
 
 df_all = pd.concat(dfs_sorted)
 
+## ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)
@@ -43,7 +43,6 @@ n_sites = len(sites_id)
 
 n_obs = np.array([len(df) for df in dfs_sorted])
 
-weights = pt.sqrt(1/n_obs)
 
 # names for saving idata by site and ordered number (idata01, idata02...etc)
 names = []
@@ -122,8 +121,6 @@ else:
     pass
 
 
-# # save inference data from model
-# az.to_netcdf(idata, "./posterior_summary/"+names[0])
 
 #load sumamries
 summs = glob.glob("./meta_analysis/*")
@@ -159,91 +156,9 @@ try:
     del idata_meta.sample_stats
 except:
     pass
+
+
 az.to_netcdf(idata_meta, "./meta_analysis_idata.nc")
 
 summ = az.summary(idata_meta, hdi_prob=0.9)
 summ.to_csv("meta_analysis_summary.csv")
-
-pos_mu = az.extract(idata_meta)['theta'].values
-pos_sig = az.extract(idata_meta)['sigma'].values #to assess between study variability
-
-# Extract posterior means and credible intervals for theta
-theta_mean = idata_meta.posterior['theta'].mean(dim=('chain', 'draw')).values
-theta_ci = az.hdi(idata_meta, hdi_prob=0.9, var_names=['theta']).theta.values
-
-# Forest plot of each site (meta-analysis)
-plt.figure(figsize=(8, 6))
-plt.errorbar(theta_mean, np.arange(n_sites), xerr=[theta_mean - theta_ci[:, 0], theta_ci[:, 1] - theta_mean],
-             fmt='o', capsize=5, label='Site μ')
-plt.axvline(x=idata_meta.posterior['mu'].mean(), color='r', linestyle='--', label='Overall μ')
-plt.yticks(np.arange(n_sites), [f'Site {i+1}' for i in range(n_sites)])
-plt.xlabel('Effect Size')
-plt.title(r"$\bf{B.}$ Meta-analysis", loc="left")
-plt.legend()
-plt.gca().invert_yaxis()
-plt.savefig("meta_analysis_site_forestplots.png", dpi=300)
-plt.show()
-plt.close()
-
-
-
-
-# Extract posterior means for alpha and beta
-
-# idata_meta = az.from_netcdf("./meta_analysis_idata.nc")
-
-pos_mu = az.extract(idata_meta)['mu'].values
-pos_sig = az.extract(idata_meta)['sigma'].values.mean(axis=0)
-
-# pos_alpha = az.extract(idata_meta)['alpha'].values
-# pos_beta = az.extract(idata_meta)['beta'].values
-
-mu_meta = az.extract(idata_meta)['mu'].values
-sig_meta = az.extract(idata_meta)['sigma'].values
-tau_meta = az.extract(idata_meta)['tau'].values
-the_meta = az.extract(idata_meta)['theta'].values
-# pos_alpha = the_meta.mean(axis=0)**2 / sig_meta.mean(axis=0)**2
-# pos_beta = the_meta.mean(axis=0) / sig_meta.mean(axis=0)**2
-
-pos_alpha = pos_mu**2 / pos_sig**2 
-pos_beta = pos_mu / pos_sig**2 
-
-# Calculate mean alpha and beta across posterior samples
-mean_alpha = np.median(pos_alpha)
-mean_beta = np.median(pos_beta)
-
-x = np.linspace(0, 20, 1000)
-pdf = gamma.pdf(x, a=mean_alpha, scale=1/mean_beta)  # Theoretical gamma PDF
-
-gam_dist = gamma(a=mean_alpha, scale=1/mean_beta)
-gam_samples = gam_dist.rvs(size=8000)  # Draw 10,000 random samples
-pdf5, pdf95 = az.hdi(gam_samples, hdi_prob=0.9)  # 90% HDI
-
-mode_pos = (pos_alpha - 1) / pos_beta
-
-median_pdf_pos = gamma.median(pos_alpha, scale=1/pos_beta)
-
-median_pdf = np.median(median_pdf_pos)
-med5, med95 = list(az.hdi(median_pdf_pos, hdi_prob=0.9))
-
-mode_pdf = np.median(mode_pos)
-mod5, mod95 = list(az.hdi(mode_pos, hdi_prob=0.9))
-
-pos_mean = pos_mu.mean()
-mea5, mea95 = list(az.hdi(pos_mu, hdi_prob=0.9))
-
-# Plot the pooled gamma distribution using posterior information
-plt.figure(figsize=(10, 6))
-plt.plot(x, pdf, 'r-', lw=2, label=f'Gamma Distribution (α={mean_alpha:.2f}, β={mean_beta:.2f})')
-plt.fill_between(x, pdf, where=(x >= pdf5) & (x <= pdf95), color='gray', alpha=0.3, label=f'90% HDI: {pdf5:.2f} - {pdf95:.2f} days')
-plt.axvline(pos_mean, c='k', ls='--', label=f'Mean = {pos_mean:.2f} [{mea5:.2f}, {mea95:.2f}] days')
-plt.axvline(median_pdf, c='k', ls=':', label=f'Median = {median_pdf:.2f} [{med5:.2f}, {med95:.2f}] days')
-plt.axvline(mode_pdf, c='k', ls='-.', label=f'Mode = {mode_pdf:.2f} [{mod5:.2f}, {mod95:.2f}] days')
-plt.title(r"$\bf{B.}$ Meta-analysis Gamma Distribution (COVID-19)", loc="left", size=20)
-plt.xlabel("Incubation Period (Days)", size=18)
-plt.ylabel("Density")
-plt.legend(fontsize=16)
-plt.grid(True)
-plt.tight_layout()
-plt.savefig('meta_analysis_summary.png', dpi=600)
-plt.show()

@@ -9,8 +9,7 @@ import pymc_experimental as pme
 import pytensor.tensor as pt
 make_prior = pme.utils.prior.prior_from_idata
 from tqdm import tqdm
-from scipy.stats import gamma
-from tqdm import tqdm
+
 
 #####plotting parameters
 plt.rcParams.update({'font.size': 14})
@@ -37,6 +36,7 @@ for d in range(len(dfs)):
     idxs.append(idx)
 dfs_sorted = [dfs[i] for i in idxs] 
 
+## ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)

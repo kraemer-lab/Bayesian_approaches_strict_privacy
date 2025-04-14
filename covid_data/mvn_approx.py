@@ -9,7 +9,6 @@ import pymc_experimental as pme
 import pytensor.tensor as pt
 make_prior = pme.utils.prior.prior_from_idata
 from tqdm import tqdm
-from scipy.stats import gamma
 
 #####plotting parameters
 plt.rcParams.update({'font.size': 14})
@@ -56,12 +55,13 @@ n_sites = len(sites_id)
 
 n_obs = np.array([len(df) for df in dfs_sorted])
 
-weights = pt.sqrt(1/n_obs)
 
+## ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)
     return pt.log(U - L + 1e-16) #add very small 1e-16 offset for stability
+
 
 with pm.Model() as mod:
     

@@ -19,6 +19,8 @@ plt.rcParams['font.serif'] = "Cambria Math"
 
 np.random.seed(27) # set numpy random seed
 
+#-----------------------------------------------------------------------------#
+########## Load data 
 
 idata_mvn = az.from_netcdf("./mvn_approx_idata.nc")
 idata_meta = az.from_netcdf("./meta_analysis_idata.nc")
@@ -65,7 +67,9 @@ meta_b = the_meta.mean(axis=0) / sig_meta.mean(axis=0)**2
 mvn_a = mu_mvn**2 / sig_mvn**2
 mvn_b = mu_mvn / sig_mvn**2
 
-#### Compute overlap and divergence indices
+
+#-----------------------------------------------------------------------------#
+########## Compute overlap and divergence indices
 
 def overlap_coefficient_gamma(a1, b1, a2, b2):
 
@@ -123,6 +127,8 @@ hdi_mvn_pdf = az.hdi(pdf_mvn.T, hdi_prob=0.9).T
 
 
 
+#-----------------------------------------------------------------------------#
+########## Plot distributions comparisons
 
 # Create the figure and outer grid
 fig = plt.figure(figsize=(18, 8))
@@ -210,7 +216,8 @@ plt.show()
 plt.close()
 
 
-################## Plot Extra Summaries
+#-----------------------------------------------------------------------------#
+########## Plot Extra Summaries
 
 alphas = [dir_a, mvn_a, meta_a]
 betas = [dir_b, mvn_b, meta_b]
@@ -274,8 +281,9 @@ plt.savefig('gamma_all_summary.png', dpi=600)
 plt.show()
 
 
+#-----------------------------------------------------------------------------#
+########## Forest plots 
 
-################ Forest plots ################
 mvn_idatas = [az.from_netcdf(d) for d in glob.glob("./mvn_approx/*")]
 mvn_theta = [az.extract(i)['mu'].values for i in mvn_idatas]
 mvn_theta.append(az.extract(idata_mvn)['mu'].values)
@@ -324,13 +332,10 @@ plt.close()
 
 
 
-
-##### Table summaries
-
-    
+#-----------------------------------------------------------------------------#
+########## Table summaries
 
 # Calculate mean alpha and beta across posterior samples
-
 mean_pos_dir = mu_dir.mean(axis=1)
 mean_dir = mu_dir.mean()
 mea_dir5, mea_dir95 = list(az.hdi(mean_pos_dir, hdi_prob=0.9))
@@ -425,7 +430,6 @@ print(df_gamma)
 
 # Save to CSV
 df_gamma.to_csv("gamma_statistics_comparison.csv")
-
 
 
 

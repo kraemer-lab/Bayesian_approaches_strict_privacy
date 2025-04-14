@@ -9,7 +9,6 @@ import pymc_experimental as pme
 import pytensor.tensor as pt
 make_prior = pme.utils.prior.prior_from_idata
 from tqdm import tqdm
-from scipy.stats import gamma
 
 #####plotting parameters
 plt.rcParams.update({'font.size': 14})
@@ -56,11 +55,12 @@ exact = np.array([lower[i] for i in exact_indices])
 interval_idxs = idxs[interval_indices]
 exact_idxs = idxs[exact_indices]
 
-
+## ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)
     return pt.log(U - L)
+
 
 with pm.Model() as mod:
     
@@ -186,6 +186,7 @@ try:
     del idatas[-1].sample_stats
 except:
     pass
+
 az.to_netcdf(idatas[-1], "./mvn_approx_idata.nc")
 
 

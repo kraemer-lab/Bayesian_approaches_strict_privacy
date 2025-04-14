@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import glob
 import pytensor.tensor as pt
 from tqdm import tqdm
-from scipy.stats import gamma
 
 #####plotting parameters
 plt.rcParams.update({'font.size': 14})
@@ -29,6 +28,7 @@ summs = np.sort(summs)
 
 df_all = pd.concat(dfs_sorted)
 
+## ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)
@@ -40,7 +40,6 @@ n_sites = len(sites_id)
 
 n_obs = np.array([len(df) for df in dfs_sorted])
 
-weights = pt.sqrt(1/n_obs)
 
 # names for saving idata by site and ordered number (idata01, idata02...etc)
 names = []
@@ -149,6 +148,7 @@ try:
     del idata_meta.sample_stats
 except:
     pass
+
 az.to_netcdf(idata_meta, "./meta_analysis_idata.nc")
 
 summ = az.summary(idata_meta, hdi_prob=0.9)

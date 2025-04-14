@@ -6,7 +6,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import glob
 import pytensor.tensor as pt
-from scipy.stats import gamma
 
 
 #####plotting parameters
@@ -61,14 +60,12 @@ interval_idxs = idxs[interval_indices]
 exact_idxs = idxs[exact_indices]
 
 
-# Define the Gamma CDF and censored likelihood
-
+# ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)
     return pt.log(U - L)
 
-weights = pt.sqrt(1/n_obs)
 
 # Build the PyMC model
 with pm.Model() as mod:
@@ -96,14 +93,9 @@ with pm.Model() as mod:
 # Sample from the model
 with mod:
     idata_dir = pm.sample(2000, tune=2000, nuts_sampler='numpyro', random_seed=27, target_accept=0.95)
-    
-try:
-    del idata_dir.observed_data
-except:
-    pass
-try:
-    del idata_dir.sample_stats
-except:
-    pass
+
+
+summ = az.summary(idata_dir, hdi_prob=0.9)
+summ.to_csv("direct_analysis_summary.csv")
 
 az.to_netcdf(idata_dir, "./direct_analysis_idata.nc")

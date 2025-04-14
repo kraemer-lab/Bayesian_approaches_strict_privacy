@@ -9,7 +9,6 @@ import pymc_experimental as pme
 import pytensor.tensor as pt
 make_prior = pme.utils.prior.prior_from_idata
 from tqdm import tqdm
-from scipy.stats import gamma
 
 #####plotting parameters
 plt.rcParams.update({'font.size': 14})
@@ -30,6 +29,7 @@ n_sites = len(paths)
 
 idxs = np.arange(n_sites)
 
+## ICG likelihood function
 def censored(name, alpha, beta, lower, upper):
     L = pt.gammainc(alpha, lower*beta)
     U = pt.gammainc(alpha, upper*beta)
@@ -97,8 +97,6 @@ else:
     pass
 
 
-# # save inference data from model
-# az.to_netcdf(idata, "./posterior_summary/"+names[0])
 
 #loop over datasets to perform meta-analysis
 summs = glob.glob("./meta_analysis/*")
@@ -146,5 +144,6 @@ try:
     del idata_meta.sample_stats
 except:
     pass
+
 az.to_netcdf(idata_meta, "./meta_analysis_idata.nc")
 
